@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: swft-social-agent
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: BASIC_AUTH_USER
+        sync: false
+      - key: BASIC_AUTH_PASS
+        sync: false
+      - key: GDRIVE_ENABLED
+        value: false

@@ -11,6 +11,22 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// ── Basic auth (set BASIC_AUTH_USER + BASIC_AUTH_PASS env vars to enable) ────
+if (process.env.BASIC_AUTH_USER && process.env.BASIC_AUTH_PASS) {
+  app.use((req, res, next) => {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith("Basic ")) {
+      const [user, pass] = Buffer.from(auth.slice(6), "base64").toString().split(":");
+      if (user === process.env.BASIC_AUTH_USER && pass === process.env.BASIC_AUTH_PASS) {
+        return next();
+      }
+    }
+    res.set("WWW-Authenticate", 'Basic realm="SWFT Social Agent"');
+    res.status(401).send("Unauthorized");
+  });
+}
+
 app.use(express.static(path.join(__dirname, "public")));
 
 // ── Generate content ──────────────────────────────────────────────────────────
