@@ -1,0 +1,17 @@
+{
+  "name": "swft-social-agent",
+  "version": "1.0.0",
+  "description": "SWFT AI social media content agent",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "generate": "node index.js generate",
+    "help": "node index.js help"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "googleapis": "^144.0.0",
+    "dotenv": "^16.4.5"
+  }
+}
