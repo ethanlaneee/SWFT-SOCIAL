@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWFT Social Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --accent: #f5a623;
+      --accent-dim: #c4831a;
+      --text: #f0f0f0;
+      --muted: #888;
+      --ig: #e1306c;
+      --fb: #1877f2;
+      --li: #0a66c2;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    header .tagline {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    header .dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Form elements ── */
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .form-group { margin-bottom: 20px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn:hover { background: var(--accent-dim); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover { background: var(--border); }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-label { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ── */
+    .status {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .status.error { color: #e05353; }
+
+    /* ── Posts grid ── */
+    #posts-output { margin-top: 40px; }
+
+    .week-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .topic-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 28px;
+    }
+
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .post-card-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .platform-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .platform-badge.instagram { background: rgba(225,48,108,0.15); color: var(--ig); }
+    .platform-badge.facebook  { background: rgba(24,119,242,0.15); color: var(--fb); }
+    .platform-badge.linkedin  { background: rgba(10,102,194,0.15); color: var(--li); }
+
+    .hook-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .post-card-body { padding: 16px; }
+
+    .post-content {
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: var(--text);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .post-meta {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .meta-row {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 6px;
+    }
+
+    .meta-row strong { color: var(--text); }
+
+    .hashtags {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .image-prompt {
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--bg);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .copy-btn {
+      margin-top: 12px;
+      padding: 7px 14px;
+      font-size: 12px;
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .copy-btn:hover { color: var(--text); border-color: var(--muted); }
+    .copy-btn.copied { color: #4caf50; border-color: #4caf50; }
+
+    /* ── Reply panel ── */
+    .reply-result {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: none;
+    }
+
+    .reply-result.visible { display: block; }
+
+    .reply-text {
+      font-size: 15px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .reply-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+    }
+
+    .empty .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <div>
+    <h1>SWFT Social Agent</h1>
+    <div class="tagline">simple. smart. swft.</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" data-tab="generate">Generate Content</button>
+    <button class="tab" data-tab="reply">Reply to Comment</button>
+  </div>
+
+  <!-- ── Generate tab ── -->
+  <div class="tab-panel active" id="tab-generate">
+    <div class="form-group">
+      <label>Topic (optional — leave blank to auto-find trending topics)</label>
+      <input type="text" id="topic-input" placeholder="e.g. why contractors lose $50k a year to missed calls" />
+    </div>
+
+    <button class="btn" id="generate-btn" onclick="generateContent()">
+      <span class="spinner"></span>
+      <span class="btn-label">Generate This Week's Posts</span>
+    </button>
+
+    <div class="status" id="generate-status"></div>
+
+    <div id="posts-output">
+      <div class="empty">
+        <div class="icon">✦</div>
+        <p>Hit Generate to create Instagram, Facebook, and LinkedIn posts</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reply tab ── -->
+  <div class="tab-panel" id="tab-reply">
+    <div class="form-group">
+      <label>Platform</label>
+      <select id="reply-platform">
+        <option value="instagram">Instagram</option>
+        <option value="facebook">Facebook</option>
+        <option value="linkedin">LinkedIn</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Comment to reply to</label>
+      <textarea id="reply-comment" placeholder="e.g. How much does this cost?"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Post context (optional)</label>
+      <input type="text" id="reply-context" placeholder="e.g. SWFT AI agent that answers missed calls for contractors" />
+    </div>
+
+    <button class="btn" id="reply-btn" onclick="generateReply()">
+      <span class="spinner"></span>
+      <span class="btn-label">Generate Reply</span>
+    </button>
+
+    <div class="status" id="reply-status"></div>
+
+    <div class="reply-result" id="reply-result">
+      <div class="reply-label">Generated Reply</div>
+      <div class="reply-text" id="reply-text"></div>
+      <button class="copy-btn" id="copy-reply-btn" onclick="copyReply()">Copy reply</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ── Generate content ──────────────────────────────────────────────────────
+  async function generateContent() {
+    const btn = document.getElementById("generate-btn");
+    const status = document.getElementById("generate-status");
+    const topic = document.getElementById("topic-input").value.trim();
+
+    btn.classList.add("loading");
+    btn.disabled = true;
+    status.className = "status";
+    status.textContent = topic
+      ? `Generating posts about "${topic}"...`
+      : "Searching for trending topics and generating posts...";
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic || null }),
+      });
+
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+
+      status.textContent = `Generated ${json.data.posts.length} posts`;
+      renderPosts(json.data);
+    } catch (err) {
+      status.className = "status error";
+      status.textContent = "Error: " + err.message;
+    } finally {
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  }
+
+  function renderPosts(data) {
+    const out = document.getElementById("posts-output");
+
+    const platformColor = { instagram: "var(--ig)", facebook: "var(--fb)", linkedin: "var(--li)" };
+
+    const cards = data.posts.map(post => {
+      const hashtags = post.hashtags?.length
+        ? post.hashtags.map(h => `#${h}`).join(" ")
+        : "";
+
+      return `
+        <div class="post-card">
+          <div class="post-card-header">
+            <span class="platform-badge ${post.platform}">${post.platform.toUpperCase()}</span>
+            <span class="hook-badge">${post.hook_type.replace(/_/g, " ")}</span>
+          </div>
+          <div class="post-card-body">
+            <div class="post-content">${escHtml(post.content)}</div>
+            ${hashtags ? `<div class="hashtags">${escHtml(hashtags)}</div>` : ""}
+            <div class="post-meta">
+              <div class="meta-row"><strong>Best time:</strong> ${escHtml(post.best_time)}</div>
+            </div>
+            <div class="image-prompt">Image prompt: ${escHtml(post.image_prompt)}</div>
+            <button class="copy-btn" onclick="copyPost(this, ${JSON.stringify(escHtml(post.content + (hashtags ? '\n\n' + hashtags : '')))})">Copy post</button>
+          </div>
+        </div>`;
+    }).join("");
+
+    out.innerHTML = `
+      <div class="week-label">Week ${escHtml(data.week)}</div>
+      <div class="topic-title">${escHtml(data.topic)}</div>
+      <div class="posts-grid">${cards}</div>`;
+  }
+
+  // ── Generate reply ────────────────────────────────────────────────────────
+  async function generateReply() {
+    const btn = document.getElementById("reply-btn");
+    const status = document.getElementById("reply-status");
+    const platform = document.getElementById("reply-platform").value;
+    const comment = document.getElementById("reply-comment").value.trim();
+    const context = document.getElementById("reply-context").value.trim();
+
+    if (!comment) {
+      status.className = "status error";
+      status.textContent = "Please enter a comment to reply to.";
+      return;
+    }
+
+    btn.classList.add("loading");
+    btn.disabled = true;
+    status.className = "status";
+    status.textContent = "Generating reply...";
+    document.getElementById("reply-result").classList.remove("visible");
+
+    try {
+      const res = await fetch("/api/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform, comment, context }),
+      });
+
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+
+      status.textContent = "";
+      document.getElementById("reply-text").textContent = json.reply;
+      document.getElementById("reply-result").classList.add("visible");
+      document.getElementById("copy-reply-btn").textContent = "Copy reply";
+      document.getElementById("copy-reply-btn").classList.remove("copied");
+    } catch (err) {
+      status.className = "status error";
+      status.textContent = "Error: " + err.message;
+    } finally {
+      btn.classList.remove("loading");
+      btn.disabled = false;
+    }
+  }
+
+  // ── Copy helpers ──────────────────────────────────────────────────────────
+  function copyPost(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Copy post";
+        btn.classList.remove("copied");
+      }, 2000);
+    });
+  }
+
+  function copyReply() {
+    const text = document.getElementById("reply-text").textContent;
+    const btn = document.getElementById("copy-reply-btn");
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Copy reply";
+        btn.classList.remove("copied");
+      }, 2000);
+    });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // Allow Enter key in topic input
+  document.getElementById("topic-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") generateContent();
+  });
+</script>
+</body>
+</html>
