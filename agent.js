@@ -3,6 +3,8 @@ import { google } from "googleapis";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const client = new Anthropic();
@@ -10,7 +12,7 @@ const client = new Anthropic();
 // ─── SWFT Brand System Prompt ────────────────────────────────────────────────
 
 const SWFT_SYSTEM_PROMPT = `
-You are SWFT's social media content agent. SWFT is an AI-powered CRM for home service businesses (contractors, HVAC, plumbing, roofing, landscaping).
+You are SWFT's social media content agent. SWFT is an AI-powered CRM for home service businesses (HVAC, plumbing, roofing, landscaping, etc.).
 
 BRAND VOICE:
 - Tagline: "simple. smart. swft."
@@ -78,18 +80,17 @@ export async function generateWeeklyContent(customTopic = null) {
 
   const userPrompt = customTopic
     ? `Generate high-retention social media posts for SWFT about: "${customTopic}".
-       Create one post for each platform: Instagram, Facebook, LinkedIn.
-       Use web search to find relevant current stats or stories to ground the content in reality.
-       Make the hooks impossible to scroll past.`
+      Create one post for each platform: Instagram, Facebook, LinkedIn.
+      Use web search to find relevant current stats or stories to ground the content in real data.`
     : `Search the web for what's trending right now in:
-       1. Home service businesses (HVAC, plumbing, roofing, landscaping)
-       2. Small business AI tools and automation
-       3. Contractor pain points and business challenges
+      1. Home service businesses (HVAC, plumbing, roofing, landscaping)
+      2. Small business AI tools and automation
+      3. Contractor pain points and business challenges
 
-       Then generate this week's social media content for SWFT.
-       Create one post per platform (Instagram, Facebook, LinkedIn).
-       Ground each post in real current data you find — specific numbers, recent stories, or trending topics.
-       Make the hooks impossible to scroll past.`;
+      Then generate this week's social media content for SWFT.
+      Create one post per platform (Instagram, Facebook, LinkedIn).
+      Ground each post in real current data you find — specific numbers, recent stories, or stats.
+      Make the hooks impossible to scroll past.`;
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -111,6 +112,7 @@ export async function generateWeeklyContent(customTopic = null) {
   // Parse JSON response
   const clean = textBlock.text.replace(/```json|```/g, "").trim();
   const contentData = JSON.parse(clean);
+
   return contentData;
 }
 
@@ -124,10 +126,8 @@ export async function saveToDrive(contentData) {
 
   const drive = google.drive({ version: "v3", auth });
 
-  // Create folder name for this week
   const folderName = `SWFT Content - Week ${contentData.week}`;
 
-  // Check if folder exists or create it
   const folderSearch = await drive.files.list({
     q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id, name)",
@@ -149,38 +149,21 @@ export async function saveToDrive(contentData) {
     console.log(` Created folder: ${folderName}`);
   }
 
-  // Save each post as a separate text file
   for (const post of contentData.posts) {
     const fileName = `${post.platform.toUpperCase()} - ${contentData.topic.slice(0, 40)}.txt`;
     const fileContent = formatPostForDrive(post, contentData);
 
-    const fileMetadata = {
-      name: fileName,
-      parents: [folderId],
-    };
-
-    const media = {
-      mimeType: "text/plain",
-      body: fileContent,
-    };
-
     await drive.files.create({
-      requestBody: fileMetadata,
-      media,
+      requestBody: { name: fileName, parents: [folderId] },
+      media: { mimeType: "text/plain", body: fileContent },
       fields: "id, name, webViewLink",
     });
 
     console.log(` Saved: ${fileName}`);
   }
 
-  // Save full JSON for posting agent to use
-  const jsonFile = {
-    name: `_content_data.json`,
-    parents: [folderId],
-  };
-
   await drive.files.create({
-    requestBody: jsonFile,
+    requestBody: { name: `_content_data.json`, parents: [folderId] },
     media: {
       mimeType: "application/json",
       body: JSON.stringify(contentData, null, 2),
@@ -190,6 +173,7 @@ export async function saveToDrive(contentData) {
 
   console.log(`\n All content saved to Google Drive folder: ${folderName}`);
   console.log(` Folder ID: ${folderId}`);
+
   return folderId;
 }
 
@@ -236,7 +220,7 @@ Respond with just the reply text, no JSON needed.`,
     messages: [
       {
         role: "user",
-        content: `Post context: "${postContext}"\n\nComment to reply to: "${commentText}"\n\nGenerate a reply.`,
+        content: `Post context: "${postContext}"\n\nComment to reply to: "${commentText}"\n\nWrite a reply:`,
       },
     ],
   });

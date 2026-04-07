@@ -19,7 +19,6 @@ async function main() {
       console.log(`\n Generated ${content.posts.length} posts about: "${content.topic}"`);
       console.log("─".repeat(50));
 
-      // Preview each post
       for (const post of content.posts) {
         console.log(`\n[${post.platform.toUpperCase()}] Hook: ${post.hook_type}`);
         console.log(`Best time: ${post.best_time}`);
@@ -27,7 +26,6 @@ async function main() {
         console.log(`\n Image: ${post.image_prompt.slice(0, 100)}...`);
       }
 
-      // Save to Google Drive
       if (process.env.GDRIVE_ENABLED === "true") {
         console.log("\n Saving to Google Drive...");
         const folderId = await saveToDrive(content);
@@ -53,7 +51,7 @@ async function main() {
 
       if (!platform || !comment) {
         console.log("Usage: node index.js reply <platform> <comment> [post-context]");
-        console.log('Example: node index.js reply instagram "How much does it cost?" "SWFT helps contractors never miss a lead"');
+        console.log('Example: node index.js reply instagram "How much does it cost?" "SWFT helps contractors stop losing leads"');
         break;
       }
 
@@ -68,7 +66,6 @@ async function main() {
       const subCommand = args[1];
 
       if (subCommand === "reply") {
-        // node index.js voice reply <platform>
         const platform = args[2] || "instagram";
         const postContext = args[3] || "SWFT AI CRM for home service businesses";
 
@@ -82,7 +79,6 @@ async function main() {
         const reply = await generateReply(platform, comment, postContext);
         console.log(`\nReply:\n${reply}`);
       } else {
-        // node index.js voice  →  speak a topic → generate
         console.log(`\n SWFT Voice Mode — Content Generation`);
         console.log(" Speak your topic (e.g. 'HVAC maintenance tips for spring').");
 
@@ -126,8 +122,8 @@ async function main() {
     default: {
       console.log(`
 ╔══════════════════════════════════════╗
-║      SWFT Social Media Agent        ║
-║       simple. smart. swft.          ║
+║     SWFT Social Media Agent          ║
+║     simple. smart. swft.             ║
 ╚══════════════════════════════════════╝
 
 Commands:
@@ -152,7 +148,7 @@ Commands:
 Examples:
   node index.js generate
   node index.js generate "missed calls cost contractors thousands"
-  node index.js reply instagram "Does this work for small HVAC companies?" "SWFT AI agent for home service"
+  node index.js reply instagram "Does this work for small HVAC companies?" "SWFT AI agent for home service businesses"
   node index.js voice
   node index.js voice reply instagram
 

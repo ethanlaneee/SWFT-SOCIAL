@@ -5,14 +5,17 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "generate": "node index.js generate",
+    "start": "node server.js",
+    "cli": "node index.js generate",
     "help": "node index.js help"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "googleapis": "^144.0.0",
     "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.89.0",
     "nodejs-whisper": "^0.1.16"
   }
 }
